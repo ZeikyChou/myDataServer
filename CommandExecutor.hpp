@@ -1,5 +1,6 @@
 
 #include <string>
+#include <string.h>
 #include <map>
 #include <fstream>
 #include "CommandParser.hpp"
@@ -17,7 +18,9 @@ class CommandExecutor {
  
  public:
     CommandExecutor() {}
-    explicit CommandExecutor(const std::string& csv_file) : csv_file_(csv_file) {}
+    explicit CommandExecutor(const std::string& csv_file) : csv_file_(csv_file) {
+      spliter_ = std::make_shared<Spliter>();
+    }
     bool Execute(const QueryCommandContent& command, std::vector<std::string>& results, std::string& msg);
     bool Execute(const ModifyCommandContent& command, std::string& msg);
     

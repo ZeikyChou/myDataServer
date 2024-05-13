@@ -1,13 +1,16 @@
 
 #include <string>
 #include <unordered_set>
+#include <vector>
+#include <memory>
 
 enum CommandType {
     INSERT,
     DELETE,
     UPDATE,
     AND,
-    OR
+    OR,
+    // Single,
 };
 
 static const std::unordered_set<std::string> ColNames = {"Nation", "Category", "Entity", "*"};
@@ -58,8 +61,8 @@ class ModifyCommandParser {
  private:
     std::shared_ptr<Spliter> spliter_{nullptr};
  public:
-    ModifyCommandParser();
-    ~ModifyCommandParser();
+    ModifyCommandParser() {}
+    ~ModifyCommandParser() {}
 
     bool Parse(const std::string& command, ModifyCommandContent& output, std::string& msg);
 };
@@ -68,8 +71,8 @@ class QueryCommandParser {
  private:
     std::shared_ptr<Spliter> spliter_{nullptr};
  public:
-    QueryCommandParser();
-    ~QueryCommandParser();
+    QueryCommandParser() {}
+    ~QueryCommandParser() {}
 
     bool Parse(const std::string& command, QueryCommandContent& output, std::string& msg);
 };

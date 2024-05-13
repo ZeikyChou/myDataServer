@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <shared_mutex>
+#include <mutex>
 /*
 127.0.0.1:9527/?query=<query string>
 curl -i "http://127.0.0.1:9527/?query=aaabbbbcc"
@@ -33,7 +34,12 @@ std::string handleRequest(const std::string &method, const std::string &uri, con
     if (method == "GET") {
         // 处理GET请求
         std::string command = uri.substr(uri.find_first_of('=') + 1);
-        // std::cout << "Command: " << command << std::endl;
+        std::string::size_type pos = 0;
+        // chulizhuanyikongge
+        while ((pos = command.find("%20")) != std::string::npos){
+            command.replace(pos, 3, " ");
+        }
+        std::cout << "Command: " << command << std::endl;
         if (type == QUERY) {
             std::vector<std::string> results;
             QueryCommandContent query_command;
@@ -48,7 +54,7 @@ std::string handleRequest(const std::string &method, const std::string &uri, con
             }
             bool ret = false;
             {
-                std::shared_lock<std::shared_mutex> lck(io_mtx);
+                std::unique_lock<std::shared_mutex> lck(io_mtx);
                 ret = Executor.Execute(query_command, results, msg);
             }           
             if (!ret) {
@@ -62,6 +68,10 @@ std::string handleRequest(const std::string &method, const std::string &uri, con
             response = "HTTP/1.1 200 OK\r\n"
                     "Content-Type: text/html; charset=utf-8\r\n"
                     "\r\n";
+            if (results.size() == 0) {
+                response += "Get Nothing";
+                return response;
+            }
             for (int i = 0; i < results.size(); i++) {
                 response += results[i];
                 if (i != results.size() - 1) {
@@ -134,7 +144,7 @@ void handleClient(int client_socket, ServerType type) {
             continue;
         }
         std::string uri = request.substr(request.find(' ') + 1, pos - request.find(' ') - 1);
-        // std::cout << "Request URI: " << uri << std::endl;
+        std::cout << "Request URI: " << uri << std::endl;
 
         // 查找HTTP请求头结束位置
         pos = request.find("\r\n\r\n");
@@ -147,8 +157,8 @@ void handleClient(int client_socket, ServerType type) {
         // std::cout << "Request Body: " << body << std::endl;
 
         // 处理HTTP请求
-        std::string response = handleRequest(method, uri, body, type);
-        std::cout << "Response: " << response << std::endl;
+        std::string response = handleRequest(method, uri, body, type) + "\n";
+        std::cout << "Response" << std::endl << response;
 
         // 发送HTTP响应
         send(client_socket, response.c_str(), response.length(), 0);

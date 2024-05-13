@@ -1,3 +1,4 @@
+#include <iostream>
 #include "CommandParser.hpp"
 bool Spliter::Split(const std::string& src, std::vector<std::string>& dest, std::string& msg, const std::string& separator) {
 	std::string str = src;
@@ -28,9 +29,9 @@ bool QuerySpliter::Split(const std::string& src, std::vector<std::string>& dest,
     size_t pos = 0;
     size_t len = src.length();
     std::string sentence;
-    bool inQuotes = false;
+    // bool inQuotes = false;
     char escapeChar = '\\';
-    int step = 0;
+    // int step = 0;
     while (pos < len && src[pos] == ' ') {
         pos++;
     }
@@ -149,6 +150,7 @@ static bool DefaultSplit(const std::string& src, std::vector<std::string>& dest,
     if (!sentence.empty()) {
         dest.push_back(sentence);
     }
+    return true;
 }
 
 bool InsertSpliter::Split(const std::string& src, std::vector<std::string>& dest, std::string& msg, const std::string& separator) {
@@ -288,6 +290,8 @@ bool QueryCommandParser::Parse(const std::string& command, QueryCommandContent& 
         output.type = AND;
     } else if (components.back() == "or") {
         output.type = OR;
+    } else if (components.back().empty()) {
+        output.type = AND;
     } else {
         if (msg.empty()) {
             msg = "Split error";

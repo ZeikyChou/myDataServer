@@ -1,5 +1,8 @@
+#include <iostream>
 #include "CommandExecutor.hpp"
 bool CommandExecutor::LoadCSV(std::map<std::string, int>& col_names) {
+    col_names.clear();
+    look_up_table_.clear();
     std::ifstream file(csv_file_);
     if (!file.is_open()) {
         return false;
@@ -24,14 +27,16 @@ bool CommandExecutor::LoadCSV(std::map<std::string, int>& col_names) {
         }
         look_up_table_.emplace_back(std::move(values));
     }
+    file.close();
     return true;
 }
 
 bool CommandExecutor::DumpCSV() {
-    std::ofstream file(csv_file_, std::ios_base::out);
+    std::ofstream file(csv_file_, std::ios_base::out | std::ios_base::trunc);
     if (!file.is_open()) {
         return false;
     }
+    file << "Nation," << "Category," << "Entity\n";
     for (const auto& row : look_up_table_) {
         for (int i = 0; i < 3; ++i) {
             file << row[i];
@@ -42,17 +47,24 @@ bool CommandExecutor::DumpCSV() {
             }
         }
     }
+    file.close();
+    look_up_table_.clear();
     return true;
 }
 
 bool CommandExecutor::Execute(const QueryCommandContent& command, std::vector<std::string>& results, std::string& msg) {
     std::map<std::string, int> col_names;
+
     this->LoadCSV(col_names);
     if (command.type == AND) {
         for (const auto& row : look_up_table_) {
+            int term_count = command.cols.size();
+            // std::cout << "term " << term_count << std::endl;
             int i = 0;
-            for (; i < 3; ++i) {
+            for (; i < term_count; ++i) {
                 if (command.relations[i] == "==") {
+                    std::cout << command.cols[i] << std::endl;
+                    std::cout << col_names[command.cols[i]] << std::endl;
                     if (row[col_names[command.cols[i]]] != command.values[i]) {
                         break;
                     }
@@ -73,14 +85,15 @@ bool CommandExecutor::Execute(const QueryCommandContent& command, std::vector<st
                     return false;
                 }
             }
-            if (i == 3) {
+            if (i == term_count) {
                 results.emplace_back(row[0]+","+row[1]+","+row[2]);
             }
         }
     } else if (command.type == OR) {
         bool hit = false;
+        int term_count = command.cols.size();
         for (const auto& row : look_up_table_) {
-            for (int i = 0; i < 3; ++i) {
+            for (int i = 0; i < term_count; ++i) {
                 if (command.relations[i] == "==") {
                     if (row[col_names[command.cols[i]]] == command.values[i]) {
                         results.emplace_back(row[0]+","+row[1]+","+row[2]);
@@ -92,11 +105,15 @@ bool CommandExecutor::Execute(const QueryCommandContent& command, std::vector<st
                         break;
                     }
                 } else if (command.relations[i] == "&="){
+                    std::cout << row[col_names[command.cols[i]]] << std::endl;
+                    std::cout << command.values[i] << std::endl;
                     if (row[col_names[command.cols[i]]].find(command.values[i]) != std::string::npos) {
                         results.emplace_back(row[0]+","+row[1]+","+row[2]);
                         break;
                     }
                 } else if (command.relations[i] == "$=") {
+                    std::cout << row[col_names[command.cols[i]]] << std::endl;
+                    std::cout << command.values[i] << std::endl;
                     if (strcasecmp(row[col_names[command.cols[i]]].c_str(), command.values[i].c_str()) == 0) {
                         results.emplace_back(row[0]+","+row[1]+","+row[2]);
                         break;
