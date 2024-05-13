@@ -17,9 +17,6 @@ response = "HTTP/1.1 200 OK\r\n"
 
 #include "CommandExecutor.hpp"
 
-static CommandExecutor Executor("data.csv");
-static QueryCommandParser QueryParser;
-static ModifyCommandParser ModifyParser;
 std::shared_mutex io_mtx;
 
 enum ServerType {
@@ -43,8 +40,9 @@ std::string handleRequest(const std::string &method, const std::string &uri, con
         if (type == QUERY) {
             std::vector<std::string> results;
             QueryCommandContent query_command;
+            QueryCommandParser query_parser;
             std::string msg;
-            if (!QueryParser.Parse(command, query_command, msg)) {
+            if (!query_parser.Parse(command, query_command, msg)) {
                 msg = "{\"msg\": \"" + msg + "\"}";
                 response = "HTTP/1.1 400 Bad Request\r\n"
                         "Content-Type: text/html; charset=utf-8\r\n"
@@ -53,9 +51,10 @@ std::string handleRequest(const std::string &method, const std::string &uri, con
                 return response;
             }
             bool ret = false;
+            CommandExecutor executor("data.csv");
             {
-                std::unique_lock<std::shared_mutex> lck(io_mtx);
-                ret = Executor.Execute(query_command, results, msg);
+                std::shared_lock<std::shared_mutex> lck(io_mtx);
+                ret = executor.Execute(query_command, results, msg);
             }           
             if (!ret) {
                 msg = "{\"msg\": \"" + msg + "\"}";
@@ -80,8 +79,9 @@ std::string handleRequest(const std::string &method, const std::string &uri, con
             }
         } else if (type == MODIFICATION) {
             ModifyCommandContent modify_command;
+            ModifyCommandParser modify_parser;
             std::string msg;
-            if (!ModifyParser.Parse(command, modify_command, msg)) {
+            if (!modify_parser.Parse(command, modify_command, msg)) {
                 msg = "{\"msg\": \"" + msg + "\"}";
                 response = "HTTP/1.1 400 Bad Request\r\n"
                         "Content-Type: text/html; charset=utf-8\r\n"
@@ -90,9 +90,10 @@ std::string handleRequest(const std::string &method, const std::string &uri, con
                 return response;
             }
             bool ret = false;
+            CommandExecutor executor("data.csv");
             {
                 std::unique_lock<std::shared_mutex> lck(io_mtx);
-                ret = Executor.Execute(modify_command, msg);
+                ret = executor.Execute(modify_command, msg);
             }           
             if (!ret) {
                 msg = "{\"msg\": \"" + msg + "\"}";
@@ -144,7 +145,7 @@ void handleClient(int client_socket, ServerType type) {
             continue;
         }
         std::string uri = request.substr(request.find(' ') + 1, pos - request.find(' ') - 1);
-        std::cout << "Request URI: " << uri << std::endl;
+        // std::cout << "Request URI: " << uri << std::endl;
 
         // 查找HTTP请求头结束位置
         pos = request.find("\r\n\r\n");
@@ -158,7 +159,7 @@ void handleClient(int client_socket, ServerType type) {
 
         // 处理HTTP请求
         std::string response = handleRequest(method, uri, body, type) + "\n";
-        std::cout << "Response" << std::endl << response;
+        // std::cout << "Response" << std::endl << response;
 
         // 发送HTTP响应
         send(client_socket, response.c_str(), response.length(), 0);
