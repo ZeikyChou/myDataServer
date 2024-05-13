@@ -1,4 +1,5 @@
-
+#ifndef COMMANDEXECUTOR_H
+#define COMMANDEXECUTOR_H
 #include <string>
 #include <string.h>
 #include <map>
@@ -25,3 +26,5 @@ class CommandExecutor {
     bool Execute(const ModifyCommandContent& command, std::string& msg);
     
 };
+
+#endif

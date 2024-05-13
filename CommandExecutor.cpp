@@ -59,25 +59,62 @@ bool CommandExecutor::Execute(const QueryCommandContent& command, std::vector<st
     if (command.type == AND) {
         for (const auto& row : look_up_table_) {
             int term_count = command.cols.size();
-            // std::cout << "term " << term_count << std::endl;
             int i = 0;
             for (; i < term_count; ++i) {
                 if (command.relations[i] == "==") {
-                    std::cout << command.cols[i] << std::endl;
-                    std::cout << col_names[command.cols[i]] << std::endl;
-                    if (row[col_names[command.cols[i]]] != command.values[i]) {
+                    if (command.cols[i] == "*") {
+                        int col_id = 0;
+                        for (; col_id < 3; ++col_id) {
+                            if (row[col_id] == command.values[i]) {
+                                break;
+                            }
+                        }
+                        if (col_id == 3) {
+                            break;
+                        }
+                    } else if (row[col_names[command.cols[i]]] != command.values[i]) {
                         break;
                     }
                 } else if (command.relations[i] == "!=") {
-                    if (row[col_names[command.cols[i]]] == command.values[i]) {
+                    if (command.cols[i] == "*") {
+                        int col_id = 0;
+                        for (; col_id < 3; ++col_id) {
+                            if (row[col_id] != command.values[i]) {
+                                break;
+                            }
+                        }
+                        if (col_id == 3) {
+                            break;
+                        }
+                    } else if (row[col_names[command.cols[i]]] == command.values[i]) {
                         break;
                     }
                 } else if (command.relations[i] == "&="){
-                    if (row[col_names[command.cols[i]]].find(command.values[i]) == std::string::npos) {
+                    if (command.cols[i] == "*") {
+                        int col_id = 0;
+                        for (; col_id < 3; ++col_id) {
+                            if (row[col_id].find(command.values[i]) != std::string::npos) {
+                                break;
+                            }
+                        }
+                        if (col_id == 3) {
+                            break;
+                        }
+                    } else if (row[col_names[command.cols[i]]].find(command.values[i]) == std::string::npos) {
                         break;
                     }
                 } else if (command.relations[i] == "$=") {
-                    if (strcasecmp(row[col_names[command.cols[i]]].c_str(), command.values[i].c_str()) != 0) {
+                    if (command.cols[i] == "*") {
+                        int col_id = 0;
+                        for (; col_id < 3; ++col_id) {
+                            if (strcasecmp(row[col_names[command.cols[i]]].c_str(), command.values[i].c_str()) == 0) {
+                                break;
+                            }
+                        }
+                        if (col_id == 3) {
+                            break;
+                        }
+                    } else if (strcasecmp(row[col_names[command.cols[i]]].c_str(), command.values[i].c_str()) != 0) {
                         break;
                     }
                 } else {
@@ -90,31 +127,74 @@ bool CommandExecutor::Execute(const QueryCommandContent& command, std::vector<st
             }
         }
     } else if (command.type == OR) {
-        bool hit = false;
         int term_count = command.cols.size();
         for (const auto& row : look_up_table_) {
             for (int i = 0; i < term_count; ++i) {
                 if (command.relations[i] == "==") {
-                    if (row[col_names[command.cols[i]]] == command.values[i]) {
+                    if (command.cols[i] == "*") {
+                        bool hit = false;
+                        for (int col_id = 0; col_id < 3; ++col_id) {
+                            if (row[col_id] == command.values[i]) {
+                                hit = true;
+                                break;
+                            }
+                        }
+                        if (hit) {
+                            results.emplace_back(row[0]+","+row[1]+","+row[2]);
+                            break;
+                        }
+                    } else if (row[col_names[command.cols[i]]] == command.values[i]) {
                         results.emplace_back(row[0]+","+row[1]+","+row[2]);
                         break;
                     }
                 } else if (command.relations[i] == "!=") {
-                    if (row[col_names[command.cols[i]]] != command.values[i]) {
+                    if (command.cols[i] == "*") {
+                        bool hit = false;
+                        for (int col_id = 0; col_id < 3; ++col_id) {
+                            if (row[col_id] != command.values[i]) {
+                                hit = true;
+                                break;
+                            }
+                        }
+                        if (hit) {
+                            results.emplace_back(row[0]+","+row[1]+","+row[2]);
+                            break;
+                        }
+                    } else if (row[col_names[command.cols[i]]] != command.values[i]) {
                         results.emplace_back(row[0]+","+row[1]+","+row[2]);
                         break;
                     }
                 } else if (command.relations[i] == "&="){
-                    std::cout << row[col_names[command.cols[i]]] << std::endl;
-                    std::cout << command.values[i] << std::endl;
-                    if (row[col_names[command.cols[i]]].find(command.values[i]) != std::string::npos) {
+                    if (command.cols[i] == "*") {
+                        bool hit = false;
+                        for (int col_id = 0; col_id < 3; ++col_id) {
+                            if (row[col_id].find(command.values[i]) != std::string::npos) {
+                                hit = true;
+                                break;
+                            }
+                        }
+                        if (hit) {
+                            results.emplace_back(row[0]+","+row[1]+","+row[2]);
+                            break;
+                        }
+                    } else if (row[col_names[command.cols[i]]].find(command.values[i]) != std::string::npos) {
                         results.emplace_back(row[0]+","+row[1]+","+row[2]);
                         break;
                     }
                 } else if (command.relations[i] == "$=") {
-                    std::cout << row[col_names[command.cols[i]]] << std::endl;
-                    std::cout << command.values[i] << std::endl;
-                    if (strcasecmp(row[col_names[command.cols[i]]].c_str(), command.values[i].c_str()) == 0) {
+                    if (command.cols[i] == "*") {
+                        bool hit = false;
+                        for (int col_id = 0; col_id < 3; ++col_id) {
+                            if (strcasecmp(row[col_id].c_str(), command.values[i].c_str()) == 0) {
+                                hit = true;
+                                break;
+                            }
+                        }
+                        if (hit) {
+                            results.emplace_back(row[0]+","+row[1]+","+row[2]);
+                            break;
+                        }
+                    } else if (strcasecmp(row[col_names[command.cols[i]]].c_str(), command.values[i].c_str()) == 0) {
                         results.emplace_back(row[0]+","+row[1]+","+row[2]);
                         break;
                     }

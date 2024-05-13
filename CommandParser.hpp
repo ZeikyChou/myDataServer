@@ -1,4 +1,5 @@
-
+#ifndef COMMANDPARSER_H
+#define COMMANDPARSER_H
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -77,3 +78,4 @@ class QueryCommandParser {
     bool Parse(const std::string& command, QueryCommandContent& output, std::string& msg);
 };
 
+#endif
