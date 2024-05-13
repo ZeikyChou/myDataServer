@@ -51,7 +51,7 @@ std::string handleRequest(const std::string &method, const std::string &uri, con
                 return response;
             }
             bool ret = false;
-            CommandExecutor executor("data.csv");
+            CommandExecutor executor("../data/data.csv");
             {
                 std::shared_lock<std::shared_mutex> lck(io_mtx);
                 ret = executor.Execute(query_command, results, msg);
@@ -90,7 +90,7 @@ std::string handleRequest(const std::string &method, const std::string &uri, con
                 return response;
             }
             bool ret = false;
-            CommandExecutor executor("data.csv");
+            CommandExecutor executor("../data/data.csv");
             {
                 std::unique_lock<std::shared_mutex> lck(io_mtx);
                 ret = executor.Execute(modify_command, msg);

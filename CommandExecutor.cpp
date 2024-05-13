@@ -1,4 +1,3 @@
-#include <iostream>
 #include "CommandExecutor.hpp"
 bool CommandExecutor::LoadCSV(std::map<std::string, int>& col_names) {
     col_names.clear();

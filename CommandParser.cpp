@@ -1,4 +1,3 @@
-#include <iostream>
 #include "CommandParser.hpp"
 bool Spliter::Split(const std::string& src, std::vector<std::string>& dest, std::string& msg, const std::string& separator) {
 	std::string str = src;
